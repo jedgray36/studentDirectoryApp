@@ -165,7 +165,7 @@ const closeModal = () => {
       <div className='title'>Student Directory <PersonIcon fontSize='large'/></div>
       </div>
       <div className='sub'>
-      <h3 className='students'>Students List Admin</h3>
+      <h3 className='students'>Students</h3>
 
       <button onClick={() => {setAction({type: "adding"}); setShow(true)}} className='add'>
         Add Student <AddIcon/>
@@ -174,8 +174,8 @@ const closeModal = () => {
         setAction(prevAction => prevAction.type === "editing" 
         ? { type: "deleting" } 
         : { type: "editing" })} className='delete'>
-        {action.type === "deleting" && <>Delete Students <DeleteIcon/></> }
-         {(action.type === "editing" || action.type === "adding") && <>Edit Students <EditIcon/></>}
+        {action.type === "editing" && <>Delete Students <DeleteIcon/></> }
+         {(action.type === "deleting" || action.type === "adding") && <>Edit Students <EditIcon/></>}
         </button>
 
       </div>

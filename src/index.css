@@ -14,13 +14,13 @@ code {
 
 .App {
   height: 100vh;
-  background: linear-gradient(to bottom, #616161, #959595);
+  background: linear-gradient(to bottom, #41436a, #984063);
 }
 
 .header {
   color: white;
-  background: linear-gradient(to right, #ff9009, #ff6666);
-
+  
+  background-color: #fe9677;
 }
 
 .title {
@@ -41,7 +41,7 @@ code {
   display: flex;
   width: 100%;
   align-items: center;
-  background-color: rgb(65, 65, 65);
+  background-color: #F64668;
   color: white;
   margin-bottom: 1rem;
 }
@@ -60,8 +60,8 @@ code {
   font-size: large;
   padding: 0.5rem;
   align-items: center;
-  background: #ff9009;
-  color: white;
+  background: #ffffff;
+  color: black;
   text-wrap: nowrap;
   margin: 1rem;
 }
@@ -69,7 +69,7 @@ code {
 .delete {
   color: white;
   text-wrap: nowrap;
-  background-color: #ff6666;
+  background-color: #565656;
   margin: 1rem;
   padding: 0.5rem;
   border-radius: 15px;
