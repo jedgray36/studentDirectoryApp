@@ -3,10 +3,11 @@ import { Modal, ModalBody, ModalHeader } from 'react-bootstrap';
 
 interface ModalProps {
     open: boolean;
+    type: "editing" | "deleting" | "adding"
 }
 
 
-const DeleteModal: FC<ModalProps> = ({open}) => {
+const ActionModal: FC<ModalProps> = ({open, type}) => {
 
 
 return (
@@ -15,9 +16,9 @@ return (
 show={open}
 size="lg"
 centered>
-<ModalHeader>Delete Item</ModalHeader>
+<ModalHeader>Performing Update</ModalHeader>
 <ModalBody>
-    <span>Deleting Item...</span>
+    <span>{type} Item...</span>
 <div className="d-flex justify-content-center">
   <div className="spinner-border" role="status">
   </div>
@@ -30,4 +31,4 @@ centered>
 }
 
 
-export default DeleteModal;
+export default ActionModal;

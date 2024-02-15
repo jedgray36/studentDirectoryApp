@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
@@ -8,7 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import DeleteIcon from '@mui/icons-material/Delete';
-import DeleteModal from './DeleteModal';
+import DeleteModal from './ActionModal';
 
 
 interface Student {
@@ -17,13 +16,18 @@ interface Student {
   lastName: string,
   age: string,
   subjects: string[]
-  id: string,
+}
+
+interface Actions { 
+  type: "editing" | "deleting" | "adding"
 }
 
 
 function App() {
 
 const [students, setStudents] = useState<Student[]>([]);
+const [student, setStudent] = useState<Student | undefined>(undefined);
+
 const [firstName, setFirstName] = useState<string>();
 const [lastName, setLastName] = useState<string>();
 const [age, setAge] = useState<string>();
@@ -33,16 +37,16 @@ const [newSubject, setNewSubject] = useState('');
 const [showActionModal, setShowActionModal] = useState(false);
 
 const [show, setShow] = useState(false);
+
 const [studentFlag, setStudentFlag] = useState<boolean>(true);
-const [deleteFlag, setDeleteFlag] = useState<boolean>(false);
-const [refreshFlag, setRefreshFlag] = useState<boolean>(false);
+const [action, setAction] = useState<Actions>({type: "editing"});
+
 
 useEffect(() => {
   getStudents();
-}, [refreshFlag])
+}, [])
 
 const getStudents = async () => {
-  setRefreshFlag(false)
   try {
     const studentData = await axios.get('http://localhost:3001/api/student');
     setStudents(studentData.data)
@@ -68,13 +72,17 @@ const addStudents = async () => {
       subjects: subjects
     }
     await axios.post('http://localhost:3001/api/student',newStudent)
-    setRefreshFlag(true);
+    setShowActionModal(true);
+    setTimeout(() => {
+      getStudents();
+      setShowActionModal(false);
+    }, 2000)
   } catch(e) {
     console.log(e);
   }
 }
 
-const updateStudent = async (student: Student) => {
+const updateStudent = async (id: string | undefined) => {
   try {
     const updateStudent = {
       firstName: firstName,
@@ -82,8 +90,13 @@ const updateStudent = async (student: Student) => {
       age: age,
       subjects: subjects
     }
-    await axios.put('http://localhost:3001/api/student',updateStudent)
-    setRefreshFlag(true);
+    setShowActionModal(true);
+    await axios.put(`http://localhost:3001/api/student/${id}`,updateStudent)
+    setShowActionModal(true);
+    setTimeout(() => {
+      getStudents();
+      setShowActionModal(false);
+    }, 2000)
   } catch(e) {
     console.log(e);
   }
@@ -91,14 +104,15 @@ const updateStudent = async (student: Student) => {
 
 
 const deleteStudent = async (id: string) => { 
+  
   try {
     
     await axios.delete(`http://localhost:3001/api/student/${id}`);
-    const updatedStduents = students.filter((student) => student.id !== id);
+    const updatedStduents = students.filter((student) => student._id !== id);
     setStudents(updatedStduents);
     setShowActionModal(true);
     setTimeout(() => {
-      setRefreshFlag(true);
+      getStudents();
       setShowActionModal(false);
     }, 2000)
 
@@ -109,19 +123,6 @@ catch(e) {
 }
 }
 
-const getStudent = async (id: any) => {
-  try {
-    await axios.delete(`http://localhost:3001/api/student/${id}`);
-    setRefreshFlag(true);
-  }
-catch(e) {
-  console.log(e)
-}
-}
-
-const setDelete = () => {
-  setDeleteFlag(!deleteFlag);
-}
 
 
 const handleSubDelete = (id: any) => {
@@ -142,6 +143,7 @@ const handleNewSubjectChange = (e: any) => {
 
 
 const populateModal = (studentItem: Student) => {
+setStudent(studentItem)
 setFirstName(studentItem.firstName);
 setLastName(studentItem.lastName);
 setAge(studentItem.age);
@@ -153,7 +155,9 @@ const closeModal = () => {
   setLastName("");
   setAge(undefined);
   setSubjects([]);
+  setAction({type: "editing"});
 }
+
 
   return (
     <div className="App">
@@ -163,24 +167,30 @@ const closeModal = () => {
       <div className='sub'>
       <h3 className='students'>Students List Admin</h3>
 
-      <button onClick={() => setShow(true)} className='add'>
+      <button onClick={() => {setAction({type: "adding"}); setShow(true)}} className='add'>
         Add Student <AddIcon/>
         </button> 
-      <button onClick={() => setDelete()} className='delete'>
-        {!deleteFlag ? <>Delete Students <DeleteIcon/></> : <>Edit Students <EditIcon/></>}
+      <button onClick={() => 
+        setAction(prevAction => prevAction.type === "editing" 
+        ? { type: "deleting" } 
+        : { type: "editing" })} className='delete'>
+        {action.type === "deleting" && <>Delete Students <DeleteIcon/></> }
+         {(action.type === "editing" || action.type === "adding") && <>Edit Students <EditIcon/></>}
         </button>
 
       </div>
-      <DeleteModal open={showActionModal}/>
+      <DeleteModal open={showActionModal} type={action.type}/>
       {studentFlag ? <div>No Student Data</div> : ""}
       <div className='containerStudent'>
         {students.map((student: Student) => 
-        <div className='student' key={student.id}>
+        <div className='student' key={student._id}>
             <div className='edit'>{student.firstName + " " + student.lastName}
             <button className='dataButton'>
-              {!deleteFlag 
-              ? <EditIcon onClick={() => {setShow(true); populateModal(student)}} /> 
-              : <DeleteIcon onClick={() => deleteStudent(student._id)}/>}
+
+              {action.type === "editing" ?
+              <EditIcon onClick={() => { setAction({type: "editing"}); setShow(true);  populateModal(student)}} /> : ""}
+              {action.type === "deleting" ?
+              <DeleteIcon onClick={() => { deleteStudent(student._id)}}/> : ""}
               </button></div>
             <div>Age: {student.age}</div>
             <div>Subjects: {student.subjects.map((subject: string, index: any) => (
@@ -235,8 +245,11 @@ const closeModal = () => {
               </div>
               
             </Modal.Body>
-            <Modal.Footer>
-            <Button variant="outlined" onClick={() => {setShow(false); addStudents();}}>Submit</Button>
+            <Modal.Footer> 
+            {action.type === "adding" && <Button variant="outlined" onClick={() => {setShow(false); addStudents();}}>Submit</Button>}
+                
+              {action.type === "editing" && <Button variant="outlined" onClick={() => {setShow(false); updateStudent(student?._id);}}>Update</Button>}
+              
               <Button variant="error" onClick={() => {setShow(false); closeModal();}}>Close</Button>
             </Modal.Footer>
           </Modal>
