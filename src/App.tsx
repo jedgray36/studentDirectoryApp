@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import './search.css';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
 import { Modal, Button } from 'react-bootstrap';
@@ -8,9 +9,10 @@ import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModal from './ActionModal';
+import SearchBar from './SearchBar';
 
 
-interface Student {
+export interface Student {
   _id: string,
   firstName: string,
   lastName: string,
@@ -26,6 +28,7 @@ interface Actions {
 function App() {
 
 const [students, setStudents] = useState<Student[]>([]);
+const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
 const [student, setStudent] = useState<Student | undefined>(undefined);
 
 const [firstName, setFirstName] = useState<string>();
@@ -37,10 +40,9 @@ const [newSubject, setNewSubject] = useState('');
 const [showActionModal, setShowActionModal] = useState(false);
 
 const [show, setShow] = useState(false);
-
+let orignalStudents = students;
 const [studentFlag, setStudentFlag] = useState<boolean>(true);
 const [action, setAction] = useState<Actions>({type: "editing"});
-
 
 useEffect(() => {
   getStudents();
@@ -50,6 +52,7 @@ const getStudents = async () => {
   try {
     const studentData = await axios.get('http://localhost:3001/api/student');
     setStudents(studentData.data)
+    setFilteredStudents(studentData.data)
     setStudentFlag(false);
   }
 catch(e) {
@@ -159,6 +162,16 @@ const closeModal = () => {
 }
 
 
+
+const search = (query: any) => {
+const searchResults = students.filter((student: Student) => 
+  student.firstName.toLowerCase().includes(query.toLowerCase()) ||
+  student.lastName.toLowerCase().includes(query.toLowerCase())
+);
+setFilteredStudents(searchResults);
+
+};
+
   return (
     <div className="App">
       <div className='header'>
@@ -166,7 +179,8 @@ const closeModal = () => {
       </div>
       <div className='sub'>
       <h3 className='students'>Students</h3>
-
+      
+      
       <button onClick={() => {setAction({type: "adding"}); setShow(true)}} className='add'>
         Add Student <AddIcon/>
         </button> 
@@ -180,9 +194,9 @@ const closeModal = () => {
 
       </div>
       <DeleteModal open={showActionModal} type={action.type}/>
-      {studentFlag ? <div>No Student Data</div> : ""}
+      {studentFlag ? <div>No Student Data</div> : <div className='search'><SearchBar querySearch={search}/></div>}
       <div className='containerStudent'>
-        {students.map((student: Student) => 
+        {filteredStudents.map((student: Student) => 
         <div className='student' key={student._id}>
             <div className='edit'>{student.firstName + " " + student.lastName}
             <button className='dataButton'>
@@ -206,7 +220,7 @@ const closeModal = () => {
           >
             <Modal.Header>
               <Modal.Title>
-               Add New Student
+              {action.type === "editing" ? "Update Student" : "Add New Student" }
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -246,9 +260,8 @@ const closeModal = () => {
               
             </Modal.Body>
             <Modal.Footer> 
-            {action.type === "adding" && <Button variant="outlined" onClick={() => {setShow(false); addStudents();}}>Submit</Button>}
-                
-              {action.type === "editing" && <Button variant="outlined" onClick={() => {setShow(false); updateStudent(student?._id);}}>Update</Button>}
+            {action.type === "adding" && <Button variant="outlined" onClick={() => {setAction({type: "editing"}); setShow(false); addStudents();}}>Submit</Button>}
+              {action.type === "editing" && <Button variant="outlined" onClick={() => {setAction({type: "editing"}); setShow(false); updateStudent(student?._id);}}>Update</Button>}
               
               <Button variant="error" onClick={() => {setShow(false); closeModal();}}>Close</Button>
             </Modal.Footer>
