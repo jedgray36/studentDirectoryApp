@@ -8,13 +8,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import AddIcon from '@mui/icons-material/Add';
 import PersonIcon from '@mui/icons-material/Person';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Delete } from '@mui/icons-material';
+import DeleteModal from './DeleteModal';
+
 
 interface Student {
+  _id: string,
   firstName: string,
   lastName: string,
   age: string,
   subjects: string[]
+  id: string,
 }
 
 
@@ -27,7 +30,7 @@ const [age, setAge] = useState<string>();
 
 const [subjects, setSubjects] = useState<string[]>([]);
 const [newSubject, setNewSubject] = useState('');
-const [showInput, setShowInput] = useState(true);
+const [showActionModal, setShowActionModal] = useState(false);
 
 const [show, setShow] = useState(false);
 const [studentFlag, setStudentFlag] = useState<boolean>(true);
@@ -62,7 +65,7 @@ const addStudents = async () => {
       firstName: firstName,
       lastName: lastName,
       age: age,
-      subjects: subjects.map((item) => item)
+      subjects: subjects
     }
     await axios.post('http://localhost:3001/api/student',newStudent)
     setRefreshFlag(true);
@@ -71,17 +74,37 @@ const addStudents = async () => {
   }
 }
 
-const updateStudent = (id: any) => {
-
+const updateStudent = async (student: Student) => {
+  try {
+    const updateStudent = {
+      firstName: firstName,
+      lastName: lastName,
+      age: age,
+      subjects: subjects
+    }
+    await axios.put('http://localhost:3001/api/student',updateStudent)
+    setRefreshFlag(true);
+  } catch(e) {
+    console.log(e);
+  }
 }
 
 
-const deleteStudent = async (student: any) => { 
+const deleteStudent = async (id: string) => { 
   try {
-    await axios.delete(`http://localhost:3001/api/student/`, student);
-    setRefreshFlag(true);
+    
+    await axios.delete(`http://localhost:3001/api/student/${id}`);
+    const updatedStduents = students.filter((student) => student.id !== id);
+    setStudents(updatedStduents);
+    setShowActionModal(true);
+    setTimeout(() => {
+      setRefreshFlag(true);
+      setShowActionModal(false);
+    }, 2000)
+
   }
 catch(e) {
+  setShowActionModal(false);
   console.log(e)
 }
 }
@@ -148,15 +171,16 @@ const closeModal = () => {
         </button>
 
       </div>
+      <DeleteModal open={showActionModal}/>
       {studentFlag ? <div>No Student Data</div> : ""}
       <div className='containerStudent'>
-        {students.map((student: Student, index: any) => 
-        <div className='student' key={index}>
+        {students.map((student: Student) => 
+        <div className='student' key={student.id}>
             <div className='edit'>{student.firstName + " " + student.lastName}
             <button className='dataButton'>
               {!deleteFlag 
               ? <EditIcon onClick={() => {setShow(true); populateModal(student)}} /> 
-              : <DeleteIcon onClick={() => deleteStudent(index)}/>}
+              : <DeleteIcon onClick={() => deleteStudent(student._id)}/>}
               </button></div>
             <div>Age: {student.age}</div>
             <div>Subjects: {student.subjects.map((subject: string, index: any) => (
